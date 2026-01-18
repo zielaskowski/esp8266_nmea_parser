@@ -6,6 +6,7 @@
 #include "freertos/task.h"
 #include "nmea_parser.h"
 #include "uart_def.h"
+#include "web_server.h"
 
 #ifdef DEBUG
 #define DEB(...) os_printf(__VA_ARGS__)
@@ -91,9 +92,44 @@ static void parse_gnss_task(void *arg) {
   }
 }
 
+static void webserver_task(void *arg) {
+  if (xSemaphoreTake(wifi_ready, portMAX_DELAY) == pdPASS) {
+    // run only if wifi_ready released
+    DEB("setting webserver..\n");
+    int sock = lwip_socket(AF_INET, SOCK_STREAM, 0);
+    struct sockaddr_in addr;
+    addr.sin_family = AF_INET;
+    addr.sin_port = htons(80);
+    addr.sin_addr.s_addr = INADDR_ANY;
+    lwip_bind(sock, (struct sockaddr *)&addr, sizeof(addr));
+    lwip_listen(sock, 1);
+    DEB("waiting connection..\n");
+    while (1) {
+      int client = lwip_accept(sock, NULL, NULL);
+      char rx[512];
+      int rx_len = lwip_recv(client, rx, sizeof(rx), 0);
+      if (rx_len <= 0) {
+        lwip_close(client);
+        return;
+      }
+      rx[rx_len] = '\0';
+      DEB("recived: %s\n", rx);
+      const char response[] = "HTTP1.1 200 OK\r\n"
+                              "Content-Type: text/plain\r\n"
+                              "Connection: close\r\n"
+                              "\r\n"
+                              "hello from esp8266\n";
+      send_all(client, response, strlen(response));
+      lwip_shutdown(client, SHUT_WR);
+      lwip_close(client);
+    }
+  }
+}
+
 void user_init(void) {
   static const signed char uartTaskName[] = "uart_gnss";
   static const signed char parseTaskName[] = "parse_gnss";
+  static const signed char webTaskName[] = "web_serv";
 
   // init uarts
   uart_init(GNSS_UART);
@@ -104,24 +140,30 @@ void user_init(void) {
 
   nmea_queue = xQueueCreate(NMEA_QUEUE_LEN, sizeof(nmea_msg_t));
   if (nmea_queue == 0) {
-    printf("Failed to create NMEA queue\n");
-    printf("restarting\n");
+    DEB("Failed to create NMEA queue\n");
     system_restart(); // restart kernel
-  } else {
-    printf("NMEA queue created\n");
   }
 
   gnss_mutex = xSemaphoreCreateMutex();
   if (gnss_mutex == NULL) {
-    printf("Failed to create GNSS mutex\n");
-    printf("restarting\n");
+    DEB("Failed to create GNSS semaphore\n");
     system_restart();
-  } else {
-    printf("GNSS mutex created\n");
+  }
+
+  vSemaphoreCreateBinary(wifi_ready);
+  if (wifi_ready == NULL) {
+    DEB("Failed to create wifi_ready semaphore\n");
+    system_restart();
   }
 
   // get GNSS string from incoming UART
   xTaskCreate(uart_gnss_task, uartTaskName, 2048, NULL, 5, NULL);
+  DEB("UART GNSS reading task registered\n");
   // parse recived NMEA sentence
-  xTaskCreate(parse_gnss_task, parseTaskName, 2048, NULL, 2, NULL);
+  xTaskCreate(parse_gnss_task, parseTaskName, 2048, NULL, 3, NULL);
+  DEB("NMEA parser task registered\n");
+  // web server
+  wifi_init();
+  xTaskCreate(webserver_task, webTaskName, 2048, NULL, 2, NULL);
+  DEB("webserver task registered\n");
 }

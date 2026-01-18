@@ -1,6 +1,7 @@
 .pio
 .cache
 .venv
+include/secrets.h
 
 # Prerequisites
 *.d
