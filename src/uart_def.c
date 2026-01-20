@@ -1,7 +1,10 @@
+#include "freertos/FreeRTOS.h"
+#include "freertos/semphr.h"
 #include "uart_def.h"
 
-void uart_init(uint8_t uart_ch) {
+xQueueHandle nmea_queue;
 
+void uart_init(uint8_t uart_ch) {
   UART_ConfigTypeDef cfg = {.baud_rate = BIT_RATE_115200,
                             .data_bits = UART_WordLength_8b,
                             .parity = USART_Parity_None,

@@ -1,5 +1,22 @@
 #include "web_server.h"
 
+// import web page
+ICACHE_FLASH_ATTR
+#include "embed_web/index.html.hex" 
+// unsigned char web_index_html[]
+// unsigned int web_index_html_len
+
+ICACHE_FLASH_ATTR
+#include "embed_web/style.css.hex" 
+// unisgned char web_style_css[]
+// unisgned int web_style_css
+
+
+ICACHE_FLASH_ATTR
+#include "embed_web/app.min.js.hex" 
+// unsigned char web_app_min_js[]
+// unsigned int web_app_min_js
+
 xSemaphoreHandle wifi_ready = NULL;
 
 static bool reason_error_auth(uint8_t reason) {

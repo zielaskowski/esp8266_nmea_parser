@@ -1,3 +1,4 @@
+#pragma once
 #include "esp_common.h"
 #include "esp_system.h"
 #include "esp_wifi.h"

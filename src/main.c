@@ -1,10 +1,8 @@
 #include "board_flash.h"
 #include "esp_system.h"
 #include "freertos/FreeRTOS.h"
-#include "freertos/queue.h"
-#include "freertos/semphr.h"
 #include "freertos/task.h"
-#include "nmea_parser.h"
+//#include "nmea_parser.h"
 #include "uart_def.h"
 #include "web_server.h"
 
@@ -13,6 +11,7 @@
 #else
 #define DEB(...)
 #endif
+
 
 static void uart_gnss_task(void *arg) {
   uint8_t ch;
@@ -49,48 +48,48 @@ static void uart_gnss_task(void *arg) {
   }
 }
 
-static void parse_gnss_task(void *arg) {
-  nmea_msg_t msg;
-
-  while (1) {
-    if (xQueueReceive(nmea_queue, &msg, portMAX_DELAY) == pdPASS) {
-      // take NMEA msg from queue
-      if (xSemaphoreTake(gnss_mutex, portMAX_DELAY) == pdPASS) {
-        // block gnss state struct from others access
-
-        // GNA message (Global Positioning Fix Data)
-        if (!strncmp(&msg.line[3], "GGA", 3)) {
-          parseGGA(&msg);
-        }
-        // GSV message (GPS Satelites in View)
-        if (!strncmp(msg.line, "$GPGSV", 6)) { // GPS
-          gnss.sats_view_GP = parseGSV(&msg);
-        }
-        if (!strncmp(msg.line, "$GLGSV", 6)) { // GLONASS
-          gnss.sats_view_GL = parseGSV(&msg);
-        }
-        if (!strncmp(msg.line, "$GBGSV", 6)) { // BEIDOU
-          gnss.sats_view_GB = parseGSV(&msg);
-        }
-        if (!strncmp(msg.line, "$BDGSV", 6)) { // BEODOU
-          gnss.sats_view_BD = parseGSV(&msg);
-        }
-        if (!strncmp(msg.line, "$GNGSV", 6)) { // GNSS
-          gnss.sats_view_GN = parseGSV(&msg);
-        }
-        if (!strncmp(msg.line, "$GAGSV", 6)) { // GALILEO
-          gnss.sats_view_GA = parseGSV(&msg);
-        }
-
-        DEB("parsing: %s\n", msg.line);
-        DEB("parsed: fix=%d sats=%d lat=%d lon=%d hdop=%d sats_v=%d\n",
-            gnss.fix, gnss.sats_use, gnss.lat, gnss.lon, gnss.hdop_x100,
-            gnss.sats_view_BD);
-      }
-      xSemaphoreGive(gnss_mutex);
-    }
-  }
-}
+/*static void parse_gnss_task(void *arg) {*/
+/*  nmea_msg_t msg;*/
+/**/
+/*  while (1) {*/
+/*    if (xQueueReceive(nmea_queue, &msg, portMAX_DELAY) == pdPASS) {*/
+/*      // take NMEA msg from queue*/
+/*      if (xSemaphoreTake(gnss_mutex, portMAX_DELAY) == pdPASS) {*/
+/*        // block gnss state struct from others access*/
+/**/
+/*        // GNA message (Global Positioning Fix Data)*/
+/*        if (!strncmp(&msg.line[3], "GGA", 3)) {*/
+/*          parseGGA(&msg);*/
+/*        }*/
+/*        // GSV message (GPS Satelites in View)*/
+/*        if (!strncmp(msg.line, "$GPGSV", 6)) { // GPS*/
+/*          gnss.sats_view_GP = parseGSV(&msg);*/
+/*        }*/
+/*        if (!strncmp(msg.line, "$GLGSV", 6)) { // GLONASS*/
+/*          gnss.sats_view_GL = parseGSV(&msg);*/
+/*        }*/
+/*        if (!strncmp(msg.line, "$GBGSV", 6)) { // BEIDOU*/
+/*          gnss.sats_view_GB = parseGSV(&msg);*/
+/*        }*/
+/*        if (!strncmp(msg.line, "$BDGSV", 6)) { // BEODOU*/
+/*          gnss.sats_view_BD = parseGSV(&msg);*/
+/*        }*/
+/*        if (!strncmp(msg.line, "$GNGSV", 6)) { // GNSS*/
+/*          gnss.sats_view_GN = parseGSV(&msg);*/
+/*        }*/
+/*        if (!strncmp(msg.line, "$GAGSV", 6)) { // GALILEO*/
+/*          gnss.sats_view_GA = parseGSV(&msg);*/
+/*        }*/
+/**/
+/*        DEB("parsing: %s\n", msg.line);*/
+/*        DEB("parsed: fix=%d sats=%d lat=%d lon=%d hdop=%d sats_v=%d\n",*/
+/*            gnss.fix, gnss.sats_use, gnss.lat, gnss.lon, gnss.hdop_x100,*/
+/*            gnss.sats_view_BD);*/
+/*      }*/
+/*      xSemaphoreGive(gnss_mutex);*/
+/*    }*/
+/*  }*/
+/*}*/
 
 static void webserver_task(void *arg) {
   if (xSemaphoreTake(wifi_ready, portMAX_DELAY) == pdPASS) {
@@ -144,11 +143,11 @@ void user_init(void) {
     system_restart(); // restart kernel
   }
 
-  gnss_mutex = xSemaphoreCreateMutex();
-  if (gnss_mutex == NULL) {
-    DEB("Failed to create GNSS semaphore\n");
-    system_restart();
-  }
+  /*gnss_mutex = xSemaphoreCreateMutex();*/
+  /*if (gnss_mutex == NULL) {*/
+  /*  DEB("Failed to create GNSS semaphore\n");*/
+  /*  system_restart();*/
+  /*}*/
 
   vSemaphoreCreateBinary(wifi_ready);
   if (wifi_ready == NULL) {
@@ -160,8 +159,8 @@ void user_init(void) {
   xTaskCreate(uart_gnss_task, uartTaskName, 2048, NULL, 5, NULL);
   DEB("UART GNSS reading task registered\n");
   // parse recived NMEA sentence
-  xTaskCreate(parse_gnss_task, parseTaskName, 2048, NULL, 3, NULL);
-  DEB("NMEA parser task registered\n");
+  /*xTaskCreate(parse_gnss_task, parseTaskName, 2048, NULL, 3, NULL);*/
+  /*DEB("NMEA parser task registered\n");*/
   // web server
   wifi_init();
   xTaskCreate(webserver_task, webTaskName, 2048, NULL, 2, NULL);

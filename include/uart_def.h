@@ -1,5 +1,6 @@
 #include "esp8266/uart_register.h"
 #include "freertos/FreeRTOS.h"
+#include "freertos/queue.h"
 #include "uart.h"
 
 /*
@@ -15,5 +16,14 @@ redirect logs here
  */
 #define GNSS_UART UART0
 #define DEBUG_UART UART1
+
+#define NMEA_MAX_LEN 82
+#define NMEA_QUEUE_LEN 10
+
+typedef struct {
+  char line[NMEA_MAX_LEN];
+} nmea_msg_t;
+
+extern xQueueHandle nmea_queue;
 
 void uart_init(uint8_t uart_ch);

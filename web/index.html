@@ -1,0 +1,27 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>NMEA Monitor</title>
+
+<link rel="stylesheet" href="style.css">
+<script src="app.js"></script>
+<!-- gps.js from CDN -->
+<script src="https://cdn.jsdelivr.net/npm/gpsjs/gps.min.js"></script>
+</head>
+
+<body>
+<div id="container">
+    <div id="raw"></div>
+
+    <div id="parsed">
+        <div><span class="label">Latitude:</span> <span id="lat" class="value">–</span></div>
+        <div><span class="label">Longitude:</span> <span id="lon" class="value">–</span></div>
+        <div><span class="label">Fix:</span> <span id="fix" class="value">–</span></div>
+        <div><span class="label">Satellites:</span> <span id="sats" class="value">–</span></div>
+    </div>
+</div>
+
+</body>
+</html>

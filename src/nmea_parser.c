@@ -1,6 +1,5 @@
 #include "nmea_parser.h"
 
-xQueueHandle nmea_queue;
 xSemaphoreHandle gnss_mutex;
 gnss_state_t gnss;
 
