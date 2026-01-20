@@ -2,7 +2,7 @@
 #include "esp_system.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
-//#include "nmea_parser.h"
+// #include "nmea_parser.h"
 #include "uart_def.h"
 #include "web_server.h"
 
@@ -11,7 +11,6 @@
 #else
 #define DEB(...)
 #endif
-
 
 static void uart_gnss_task(void *arg) {
   uint8_t ch;
@@ -96,31 +95,17 @@ static void webserver_task(void *arg) {
     // run only if wifi_ready released
     DEB("setting webserver..\n");
     int sock = lwip_socket(AF_INET, SOCK_STREAM, 0);
-    struct sockaddr_in addr;
-    addr.sin_family = AF_INET;
-    addr.sin_port = htons(80);
-    addr.sin_addr.s_addr = INADDR_ANY;
+    struct sockaddr_in addr = {addr.sin_family = AF_INET,
+                               addr.sin_port = htons(80),
+                               addr.sin_addr.s_addr = INADDR_ANY};
     lwip_bind(sock, (struct sockaddr *)&addr, sizeof(addr));
     lwip_listen(sock, 1);
-    DEB("waiting connection..\n");
+
+    DEB("waiting client..\n");
     while (1) {
       int client = lwip_accept(sock, NULL, NULL);
-      char rx[512];
-      int rx_len = lwip_recv(client, rx, sizeof(rx), 0);
-      if (rx_len <= 0) {
-        lwip_close(client);
-        return;
-      }
-      rx[rx_len] = '\0';
-      DEB("recived: %s\n", rx);
-      const char response[] = "HTTP1.1 200 OK\r\n"
-                              "Content-Type: text/plain\r\n"
-                              "Connection: close\r\n"
-                              "\r\n"
-                              "hello from esp8266\n";
-      send_all(client, response, strlen(response));
-      lwip_shutdown(client, SHUT_WR);
-      lwip_close(client);
+      if (client >= 0)
+        handle_client(client);
     }
   }
 }
