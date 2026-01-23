@@ -49,49 +49,6 @@ static void uart_gnss_task(void *arg) {
   }
 }
 
-/*static void parse_gnss_task(void *arg) {*/
-/*  nmea_msg_t msg;*/
-/**/
-/*  while (1) {*/
-/*    if (xQueueReceive(nmea_queue, &msg, portMAX_DELAY) == pdPASS) {*/
-/*      // take NMEA msg from queue*/
-/*      if (xSemaphoreTake(gnss_mutex, portMAX_DELAY) == pdPASS) {*/
-/*        // block gnss state struct from others access*/
-/**/
-/*        // GNA message (Global Positioning Fix Data)*/
-/*        if (!strncmp(&msg.line[3], "GGA", 3)) {*/
-/*          parseGGA(&msg);*/
-/*        }*/
-/*        // GSV message (GPS Satelites in View)*/
-/*        if (!strncmp(msg.line, "$GPGSV", 6)) { // GPS*/
-/*          gnss.sats_view_GP = parseGSV(&msg);*/
-/*        }*/
-/*        if (!strncmp(msg.line, "$GLGSV", 6)) { // GLONASS*/
-/*          gnss.sats_view_GL = parseGSV(&msg);*/
-/*        }*/
-/*        if (!strncmp(msg.line, "$GBGSV", 6)) { // BEIDOU*/
-/*          gnss.sats_view_GB = parseGSV(&msg);*/
-/*        }*/
-/*        if (!strncmp(msg.line, "$BDGSV", 6)) { // BEODOU*/
-/*          gnss.sats_view_BD = parseGSV(&msg);*/
-/*        }*/
-/*        if (!strncmp(msg.line, "$GNGSV", 6)) { // GNSS*/
-/*          gnss.sats_view_GN = parseGSV(&msg);*/
-/*        }*/
-/*        if (!strncmp(msg.line, "$GAGSV", 6)) { // GALILEO*/
-/*          gnss.sats_view_GA = parseGSV(&msg);*/
-/*        }*/
-/**/
-/*        DEB("parsing: %s\n", msg.line);*/
-/*        DEB("parsed: fix=%d sats=%d lat=%d lon=%d hdop=%d sats_v=%d\n",*/
-/*            gnss.fix, gnss.sats_use, gnss.lat, gnss.lon, gnss.hdop_x100,*/
-/*            gnss.sats_view_BD);*/
-/*      }*/
-/*      xSemaphoreGive(gnss_mutex);*/
-/*    }*/
-/*  }*/
-/*}*/
-
 static void webserver_task(void *arg) {
   if (xSemaphoreTake(wifi_ready, portMAX_DELAY) == pdPASS) {
     // run only if wifi_ready released
