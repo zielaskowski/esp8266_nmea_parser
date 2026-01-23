@@ -20,12 +20,6 @@ try:
     subprocess.run(
         ["xxd", "-i", "web/style.css", "src/embed_web/style.css.hex"], check=True
     )
-    subprocess.run(
-        ["xxd", "-i", "web/header_ok", "src/embed_web/header_ok.hex"], check=True
-    )
-    subprocess.run(
-        ["xxd", "-i", "web/header_error", "src/embed_web/header_error.hex"], check=True
-    )
 
 except subprocess.CalledProcessError as e:
     print(f"Processe returned error: {e}")

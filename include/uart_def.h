@@ -1,3 +1,4 @@
+#pragma once
 #include "esp8266/uart_register.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/queue.h"

@@ -2,11 +2,13 @@
 #include "esp_system.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
-// #include "nmea_parser.h"
 #include "uart_def.h"
 #include "web_server.h"
 
 #ifdef DEBUG
+#define LWIP_DEBUG 1
+#define SOCKETS_DEBUG LWIP_DBG_ON
+
 #define DEB(...) os_printf(__VA_ARGS__)
 #else
 #define DEB(...)
@@ -27,7 +29,7 @@ static void uart_gnss_task(void *arg) {
           nmea_msg_t msg;
           strcpy(msg.line, line);
           xQueueSend(nmea_queue, &msg, 0);
-          //  DEB("recived NMEA line: %s\n", msg.line);
+          // DEB("recived NMEA line: %s\n", msg.line);
         }
         // else start from zero
         idx = 0;
@@ -95,15 +97,20 @@ static void webserver_task(void *arg) {
     // run only if wifi_ready released
     DEB("setting webserver..\n");
     int sock = lwip_socket(AF_INET, SOCK_STREAM, 0);
-    struct sockaddr_in addr = {addr.sin_family = AF_INET,
-                               addr.sin_port = htons(80),
-                               addr.sin_addr.s_addr = INADDR_ANY};
-    lwip_bind(sock, (struct sockaddr *)&addr, sizeof(addr));
-    lwip_listen(sock, 1);
+
+    struct sockaddr_in addr;
+    memset(&addr, 0, sizeof(addr));
+    addr.sin_family = AF_INET;
+    addr.sin_port = htons(80);
+    addr.sin_addr.s_addr = INADDR_ANY;
+
+    int bind = lwip_bind(sock, (struct sockaddr *)&addr, sizeof(addr));
+    lwip_listen(sock, 2);
 
     DEB("waiting client..\n");
     while (1) {
       int client = lwip_accept(sock, NULL, NULL);
+      DEB("Client: %d\n", client);
       if (client >= 0)
         handle_client(client);
     }
@@ -111,9 +118,6 @@ static void webserver_task(void *arg) {
 }
 
 void user_init(void) {
-  static const signed char uartTaskName[] = "uart_gnss";
-  static const signed char parseTaskName[] = "parse_gnss";
-  static const signed char webTaskName[] = "web_serv";
 
   // init uarts
   uart_init(GNSS_UART);
@@ -128,12 +132,6 @@ void user_init(void) {
     system_restart(); // restart kernel
   }
 
-  /*gnss_mutex = xSemaphoreCreateMutex();*/
-  /*if (gnss_mutex == NULL) {*/
-  /*  DEB("Failed to create GNSS semaphore\n");*/
-  /*  system_restart();*/
-  /*}*/
-
   vSemaphoreCreateBinary(wifi_ready);
   if (wifi_ready == NULL) {
     DEB("Failed to create wifi_ready semaphore\n");
@@ -141,13 +139,10 @@ void user_init(void) {
   }
 
   // get GNSS string from incoming UART
-  xTaskCreate(uart_gnss_task, uartTaskName, 2048, NULL, 5, NULL);
+  xTaskCreate(uart_gnss_task, (signed char *)"uart_gnss", 2048, NULL, 5, NULL);
   DEB("UART GNSS reading task registered\n");
-  // parse recived NMEA sentence
-  /*xTaskCreate(parse_gnss_task, parseTaskName, 2048, NULL, 3, NULL);*/
-  /*DEB("NMEA parser task registered\n");*/
   // web server
   wifi_init();
-  xTaskCreate(webserver_task, webTaskName, 2048, NULL, 2, NULL);
+  xTaskCreate(webserver_task, (signed char *)"web_serv", 2048, NULL, 2, NULL);
   DEB("webserver task registered\n");
 }
