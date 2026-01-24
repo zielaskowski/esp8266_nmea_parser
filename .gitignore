@@ -3,6 +3,7 @@
 .venv
 include/secrets.h
 src/embed_web
+web/*
 
 # Prerequisites
 *.d

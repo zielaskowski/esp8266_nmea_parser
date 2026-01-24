@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html>
 <head>
@@ -8,6 +7,9 @@
 <link rel="stylesheet" href="style.css">
 <!-- gps.js from CDN -->
 <script src="https://cdn.jsdelivr.net/npm/gps@0.8.1/dist/gps.min.js"></script>
+<!-- chart.js from CDN -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
 <script src="app.js"></script>
 </head>
 
@@ -15,11 +17,16 @@
 <div id="container">
     <div id="raw"></div>
 
-    <div id="parsed">
+<div id="parsed">
+        <div><span class="label" id="time">-</span></div>
+        <div><h2><span class="value">GGA fix information:</span></h2></div>
         <div><span class="label">Latitude:</span> <span id="lat" class="value">–</span></div>
         <div><span class="label">Longitude:</span> <span id="lon" class="value">–</span></div>
         <div><span class="label">Fix:</span> <span id="fix" class="value">–</span></div>
+        <div><span class ="label">HDOP: </span><span class="value"><span id="hdop">-</span><span>(</span><span id="hdop_mnemonic">-</span><span>)</span></span></div>
         <div><span class="label">Satellites:</span> <span id="sats" class="value">–</span></div>
+    <div id="charts">
+    <!--Chart canvas here-->
     </div>
 </div>
 
